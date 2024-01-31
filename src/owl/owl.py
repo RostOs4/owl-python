@@ -27,7 +27,7 @@ class Owl:
         """
         self.gallery = gallery
         self.filenames = os.listdir(self.gallery)
-        self.data = np.array([cv2.imread(os.path.join(self.gallery, image_file)) for image_file in tqdm(self.filenames, desc="Loading")])
+        self.data = np.array([plt.imread(f"{self.gallery}/{image_file}") for image_file in tqdm(self.filenames, desc="Loading")])
         self.cached_features_dataframe = None
         
 
@@ -87,7 +87,7 @@ class Owl:
             model = ResNet50(weights='imagenet', include_top=False)
             images = self.apply(preprocess_input)
             features = model.predict(images)
-            features = features.reshape(len(features), 13*13*2048)
+            features = features.reshape(len(features), np.prod(features.shape[1:]))
             
             pca = PCA(n_components=2)
             pca_features = pca.fit_transform(features)
@@ -99,7 +99,7 @@ class Owl:
             df["x"] = x
             df["y"] = y
             df["filenames"] = self.filenames
-            df["filenames"] = df["filenames"].apply(lambda x: os.path.join(self.gallery, x))
+            df["filenames"] = df["filenames"].apply(lambda x: f"{self.gallery}/{x}")
             self.cached_features_dataframe = df
             
             return df
@@ -116,13 +116,13 @@ class Owl:
         """
         df = self._get_features()
         if kind == "scatter":
-            fig = px.scatter(df, x="x", y="y", title="Image Clusters", hover_data="filenames")
+            fig = px.scatter(df, x="x", y="y", title="Images Distribution", hover_data="filenames")
             fig.show()
         elif kind == "joint":
             sns.jointplot(x="x", y="y", kind="hex", data=df) 
             plt.show() 
         elif kind == "iscatter":
-            fig = px.scatter(df, x="x", y="y", title="Image Clusters", hover_data="filenames")
+            fig = px.scatter(df, x="x", y="y", title="Images Distribution", hover_data="filenames")
             template="<img src='{filenames}'>"
             html = HTML("")
 
